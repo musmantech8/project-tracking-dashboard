@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Tracking Dashboard | Muhammad Usman</title>
+  <meta name="description" content="Track projects, owners, milestones and progress — web demo with an Oracle SQL and PL/SQL backend design." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark">PT</span><div>Project Tracker<small>Status, owners &amp; deadlines</small></div></div>
+      <div class="top-actions">
+        <button class="btn btn-primary" id="addBtn">+ <span>New project</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="page-head">
+      <div>
+        <h1>Project performance</h1>
+        <p>Every project, its progress and what is due next.</p>
+      </div>
+      <button class="btn btn-sm" id="resetBtn">Reset demo data</button>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="grid-2">
+      <div class="panel">
+        <div class="panel-head"><h2>Projects by status</h2></div>
+        <div class="panel-body"><div class="bars" id="statusBars"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Upcoming deadlines</h2></div>
+        <div class="panel-body"><div class="bars" id="deadlines"></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Projects <span class="badge b-gray" id="count"></span></h2>
+        <div class="toolbar">
+          <input class="input" id="search" type="search" placeholder="Search project or owner…" />
+          <select class="select" id="statusFilter">
+            <option value="">All statuses</option>
+            <option>Planning</option><option>In progress</option><option>On hold</option><option>Completed</option>
+          </select>
+          <select class="select" id="priorityFilter">
+            <option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="name">Project</th>
+              <th data-sort="owner">Owner</th>
+              <th data-sort="priority">Priority</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="progress">Progress</th>
+              <th data-sort="due">Due date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>Built by <a href="https://github.com/musmantech8">Muhammad Usman</a> · Front-end demo of an Oracle SQL / PL/SQL application · Data is stored in your browser.</footer>
+
+  <!-- Project form -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <header><h2 id="modalTitle">New project</h2><button class="icon-btn" data-close aria-label="Close">×</button></header>
+      <form id="form">
+        <input type="hidden" name="id" />
+        <label>Project name<input class="input" name="name" required /></label>
+        <div class="form-row">
+          <label>Owner<input class="input" name="owner" required /></label>
+          <label>Priority<select class="select" name="priority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
+        </div>
+        <div class="form-row">
+          <label>Start date<input class="input" name="start" type="date" required /></label>
+          <label>Due date<input class="input" name="due" type="date" required /></label>
+        </div>
+        <label>Status<select class="select" name="status"><option>Planning</option><option>In progress</option><option>On hold</option><option>Completed</option></select></label>
+        <label>Description<textarea name="description"></textarea></label>
+        <div class="form-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tasks panel -->
+  <div class="modal" id="tasksModal" role="dialog" aria-modal="true" aria-labelledby="tasksTitle">
+    <div class="modal-card">
+      <header><h2 id="tasksTitle">Tasks</h2><button class="icon-btn" data-close aria-label="Close">×</button></header>
+      <div class="panel-body">
+        <div class="progress" style="margin-bottom:16px"><span id="tasksProgress"></span></div>
+        <ul class="task-list" id="taskList"></ul>
+        <form id="taskForm" class="task-add">
+          <input class="input" name="title" placeholder="Add a task…" required />
+          <button class="btn btn-primary" type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <style>
+    .task-list { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; }
+    .task-list li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .task-list li.done span { text-decoration: line-through; color: var(--muted); }
+    .task-list li span { flex: 1; }
+    .task-list input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .task-add { display: flex; gap: 10px; }
+    .task-add .input { flex: 1; }
+    .overdue { color: var(--red); font-weight: 600; }
+    .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; text-align: left; }
+    .link-btn:hover { color: var(--accent); }
+  </style>
+  <script src="app.js"></script>
+</body>
+</html>
